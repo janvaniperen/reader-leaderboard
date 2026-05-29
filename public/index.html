@@ -29,6 +29,9 @@
   }
   *, *::before, *::after { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
+  html.embedded, html.embedded body {
+    overflow: hidden;
+  }
   body {
     background: var(--bg);
     color: var(--ink);
@@ -496,6 +499,24 @@
     const board = document.getElementById("board");
     board.innerHTML = `<div class="error-box" style="margin: 20px;">${escapeHTML(message)}</div>`;
     document.getElementById("updated").textContent = "";
+    notifyEmbedHeight();
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Embed height — tell the parent page how tall the iframe should be
+  // ───────────────────────────────────────────────────────────────────────
+  const isEmbedded = window.self !== window.top;
+
+  function notifyEmbedHeight() {
+    if (!isEmbedded) return;
+    const height = Math.ceil(document.documentElement.scrollHeight);
+    window.parent.postMessage({ type: "reader-leaderboard:resize", height }, "*");
+  }
+
+  if (isEmbedded) {
+    document.documentElement.classList.add("embedded");
+    new ResizeObserver(() => notifyEmbedHeight()).observe(document.body);
+    window.addEventListener("load", notifyEmbedHeight);
   }
 
   // ───────────────────────────────────────────────────────────────────────
@@ -567,6 +588,7 @@
           : "";
         footerNote.innerHTML = `<strong>${total} readers across ${orgs} organisations.</strong>${tail}${minTail}`;
       }
+      notifyEmbedHeight();
     }
 
     document.getElementById("more-btn").addEventListener("click", () => {
