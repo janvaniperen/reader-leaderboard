@@ -19,13 +19,21 @@
   iframe.src = src;
   iframe.title = script.getAttribute("data-title") || "Reader Leaderboard";
   iframe.setAttribute("scrolling", "no");
-  iframe.style.cssText = "width:100%;border:0;display:block;min-height:480px;overflow:hidden;";
+  iframe.style.cssText = "width:100%;border:0;display:block;height:1px;overflow:hidden;";
 
   script.insertAdjacentElement("afterend", iframe);
+
+  function setHeight(height) {
+    iframe.style.height = Math.max(1, height) + "px";
+  }
 
   window.addEventListener("message", (event) => {
     if (event.origin !== base) return;
     if (!event.data || event.data.type !== "reader-leaderboard:resize") return;
-    iframe.style.height = `${event.data.height}px`;
+    setHeight(event.data.height);
+  });
+
+  iframe.addEventListener("load", () => {
+    iframe.contentWindow?.postMessage({ type: "reader-leaderboard:request-height" }, base);
   });
 })();
