@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reader Leaderboard</title>
+<meta name="description" content="The companies subscribed to this newsletter, ranked by reader count.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://img.logo.dev" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Defaults — overridden by ?theme= URL params for white-label */
+    --bg: #fffdf6;
+    --bg-tint: #fff5d6;
+    --bg-warm: #fff0c2;
+    --ink: #1a1410;
+    --ink-soft: #5a4f44;
+    --muted: #8b7e6f;
+    --rule: #ead8a4;
+    --rule-soft: #f3e6bf;
+    --accent: #ff7a1a;
+    --accent-dark: #d95c00;
+    --gold: #f5b400;
+    --silver: #b7b09e;
+    --bronze: #c97a3d;
+    --shadow: 0 1px 0 rgba(26,20,16,0.08), 0 12px 32px -16px rgba(26,20,16,0.12);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .root {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: clamp(24px, 5vw, 48px) clamp(16px, 4vw, 32px);
+  }
+
+  /* ───── Header ───── */
+  .header { text-align: center; margin-bottom: 36px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--bg-warm);
+    border: 1px solid var(--rule);
+    color: var(--accent-dark);
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(28px, 5vw, 44px);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin: 0 0 14px;
+  }
+  h1 em {
+    font-style: italic;
+    font-weight: 500;
+    color: var(--accent-dark);
+  }
+  .subtitle {
+    color: var(--ink-soft);
+    font-size: 15px;
+    max-width: 520px;
+    margin: 0 auto 24px;
+  }
+
+  /* ───── Stats ───── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    max-width: 560px;
+    margin: 0 auto 14px;
+  }
+  @media (max-width: 520px) {
+    .stats { grid-template-columns: 1fr; }
+  }
+  .stat {
+    background: rgba(255, 253, 246, 0.85);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 32px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 4px;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+  .updated {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  /* ───── Leaderboard ───── */
+  .board {
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .board-head {
+    display: grid;
+    grid-template-columns: 60px 1fr 80px;
+    padding: 12px 20px;
+    background: var(--bg-warm);
+    border-bottom: 1px solid var(--rule);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 60px 1fr 80px;
+    padding: 14px 20px;
+    align-items: center;
+    border-bottom: 1px solid var(--rule-soft);
+    transition: background .15s;
+  }
+  .row:last-child { border-bottom: none; }
+  .row:hover { background: var(--bg-tint); }
+  .col-rank {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--muted);
+    line-height: 1;
+  }
+  .medal {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    color: white;
+  }
+  .medal.gold {
+    background: linear-gradient(135deg, #ffd54a, var(--gold));
+    color: #6a4400;
+    box-shadow: 0 3px 10px -3px var(--gold);
+  }
+  .medal.silver {
+    background: linear-gradient(135deg, #e8e3d2, var(--silver));
+    color: #4a4636;
+    box-shadow: 0 3px 10px -3px var(--silver);
+  }
+  .medal.bronze {
+    background: linear-gradient(135deg, #e8a36c, var(--bronze));
+    color: #4a2a10;
+    box-shadow: 0 3px 10px -3px var(--bronze);
+  }
+  .col-company {
+    display: flex; align-items: center; gap: 12px;
+    min-width: 0; /* let truncation work in grid */
+  }
+  .logo-slot {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--bg-warm);
+    border: 1px solid var(--rule);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .logo-slot img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    padding: 4px;
+  }
+  .logo-fallback {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--accent-dark);
+  }
+  .company-name {
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .col-count {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 20px;
+    color: var(--ink);
+    text-align: right;
+  }
+  .col-count-label {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  /* ───── More button & footer ───── */
+  .more-btn {
+    display: block;
+    margin: 16px auto 0;
+    padding: 11px 22px;
+    border-radius: 999px;
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all .15s;
+    font-family: inherit;
+  }
+  .more-btn:hover { background: var(--bg-tint); border-color: var(--ink); }
+  .more-btn:disabled { opacity: .6; cursor: default; }
+
+  .footer-note {
+    text-align: center;
+    margin-top: 20px;
+    padding: 14px;
+    background: var(--bg-tint);
+    border: 1px solid var(--rule-soft);
+    border-radius: 12px;
+    color: var(--ink-soft);
+    font-size: 13px;
+  }
+
+  /* ───── Skeleton / loading state ───── */
+  .skeleton .row { pointer-events: none; }
+  .skeleton .logo-slot,
+  .skeleton .skel-line {
+    background: linear-gradient(90deg, var(--bg-tint) 0%, var(--rule-soft) 50%, var(--bg-tint) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite linear;
+    border: none;
+  }
+  .skeleton .company-name { width: 60%; }
+  .skeleton .skel-line {
+    display: inline-block;
+    height: 14px;
+    border-radius: 4px;
+    width: 100%;
+  }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  /* ───── Error state ───── */
+  .error-box {
+    background: #fff0ea;
+    border: 1px solid #ffb89e;
+    color: #8a2a00;
+    border-radius: 12px;
+    padding: 16px 20px;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  /* ───── Attribution ───── */
+  .attribution {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .attribution a { color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor; }
+  .attribution a:hover { color: var(--ink); }
+
+  /* Subtle reveal animation */
+  .reveal {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: rise .5s ease-out forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: .02s; }
+  .reveal:nth-child(2) { animation-delay: .06s; }
+  .reveal:nth-child(3) { animation-delay: .10s; }
+  .reveal:nth-child(4) { animation-delay: .14s; }
+  .reveal:nth-child(5) { animation-delay: .18s; }
+  @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<div class="root">
+  <div class="header">
+    <div class="eyebrow"><span class="eyebrow-dot"></span><span id="eyebrow-text">Reader Leaderboard</span></div>
+    <h1 id="title">The organisations <em id="title-em">reading along</em></h1>
+    <p class="subtitle" id="subtitle">Ranked by number of active subscribers from each company. Updated nightly.</p>
+
+    <div class="stats" id="stats">
+      <div class="stat"><div class="stat-num">—</div><div class="stat-label">Subscribers</div></div>
+      <div class="stat"><div class="stat-num">—</div><div class="stat-label">Organisations</div></div>
+      <div class="stat"><div class="stat-num">—</div><div class="stat-label">Attributed readers</div></div>
+    </div>
+    <p class="updated" id="updated">Loading latest data…</p>
+  </div>
+
+  <div class="board" id="board">
+    <div class="board-head">
+      <div>Rank</div>
+      <div>Organisation</div>
+      <div style="text-align: right;">Readers</div>
+    </div>
+    <div id="rows" class="skeleton">
+      <!-- Skeleton rows -->
+      <div class="row"><div class="col-rank"><span class="logo-slot"></span></div><div class="col-company"><span class="logo-slot"></span><span class="skel-line" style="width: 50%;"></span></div><div class="col-count"><span class="skel-line" style="width: 40px;"></span></div></div>
+      <div class="row"><div class="col-rank"><span class="logo-slot"></span></div><div class="col-company"><span class="logo-slot"></span><span class="skel-line" style="width: 65%;"></span></div><div class="col-count"><span class="skel-line" style="width: 40px;"></span></div></div>
+      <div class="row"><div class="col-rank"><span class="logo-slot"></span></div><div class="col-company"><span class="logo-slot"></span><span class="skel-line" style="width: 45%;"></span></div><div class="col-count"><span class="skel-line" style="width: 40px;"></span></div></div>
+      <div class="row"><div class="col-rank"><span class="logo-slot"></span></div><div class="col-company"><span class="logo-slot"></span><span class="skel-line" style="width: 55%;"></span></div><div class="col-count"><span class="skel-line" style="width: 40px;"></span></div></div>
+      <div class="row"><div class="col-rank"><span class="logo-slot"></span></div><div class="col-company"><span class="logo-slot"></span><span class="skel-line" style="width: 70%;"></span></div><div class="col-count"><span class="skel-line" style="width: 40px;"></span></div></div>
+    </div>
+  </div>
+
+  <button class="more-btn" id="more-btn" hidden>Show more →</button>
+  <div class="footer-note" id="footer-note" hidden></div>
+  <div class="attribution">
+    Logos by <a href="https://logo.dev" rel="noopener" target="_blank">Logo.dev</a>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ───────────────────────────────────────────────────────────────────────
+  // Config — read from URL params so the same deploy can be embedded with
+  // different styling and a different data source for each customer.
+  // ───────────────────────────────────────────────────────────────────────
+  const params = new URLSearchParams(window.location.search);
+
+  function parseIntParam(value, defaultValue, { min = 0, max = Infinity } = {}) {
+    const n = parseInt(value ?? "", 10);
+    if (!Number.isFinite(n)) return defaultValue;
+    return Math.min(max, Math.max(min, n));
+  }
+
+  const CONFIG = {
+    // Where to load the leaderboard JSON. Defaults to this same deploy's
+    // /api/leaderboard, but can point elsewhere for multi-tenant setups.
+    dataUrl: params.get("data") || "/api/leaderboard",
+
+    // Loaded from /api/config (LOGO_DEV_TOKEN env var). URL param overrides for multi-tenant embeds.
+    logoToken: "",
+
+    // How many rows to show before "Show more". Set 0 to show everything.
+    initialRows: parseIntParam(params.get("initial"), 20, { min: 0, max: 500 }),
+
+    // Max rows ever shown (privacy: small companies behind the cutoff aren't named).
+    maxRows: parseIntParam(params.get("max"), 100, { min: 0, max: 500 }),
+
+    // Hide organisations with fewer than this many readers (privacy).
+    minReaders: parseIntParam(params.get("min"), 1, { min: 1, max: 100 }),
+
+    // Copy overrides
+    eyebrow: params.get("eyebrow") || "Reader Leaderboard",
+    title: params.get("title") || "The organisations <em>reading along</em>",
+    subtitle: params.get("subtitle") || "Ranked by number of active subscribers from each company. Updated nightly.",
+
+    // Theme overrides (any CSS var name → value)
+    theme: extractTheme(params),
+  };
+
+  function extractTheme(p) {
+    const map = {};
+    for (const [k, v] of p.entries()) {
+      if (k.startsWith("c_")) {
+        // c_accent → --accent, c_bg → --bg
+        map["--" + k.slice(2).replace(/_/g, "-")] = v;
+      }
+    }
+    return map;
+  }
+
+  // Apply theme overrides
+  for (const [k, v] of Object.entries(CONFIG.theme)) {
+    document.documentElement.style.setProperty(k, v);
+  }
+
+  // Apply copy overrides
+  document.getElementById("eyebrow-text").textContent = CONFIG.eyebrow;
+  document.getElementById("title").innerHTML = sanitizeTitle(CONFIG.title);
+  document.getElementById("subtitle").textContent = CONFIG.subtitle;
+
+  // Swap broken logo.dev images for initials fallback
+  document.getElementById("board").addEventListener("error", (e) => {
+    const img = e.target;
+    if (img.tagName !== "IMG" || !img.dataset.initials) return;
+    const span = document.createElement("span");
+    span.className = "logo-fallback";
+    span.textContent = img.dataset.initials;
+    img.replaceWith(span);
+  }, true);
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Rendering
+  // ───────────────────────────────────────────────────────────────────────
+  function markFor(name) {
+    const stripped = name.replace(/[^A-Za-z0-9 ]/g, "").trim();
+    const parts = stripped.split(/\s+/);
+    if (parts.length === 0 || parts[0] === "") return "?";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
+  function escapeHTML(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function sanitizeTitle(html) {
+    const escaped = escapeHTML(html);
+    return escaped
+      .replace(/&lt;em&gt;/gi, "<em>")
+      .replace(/&lt;\/em&gt;/gi, "</em>");
+  }
+
+  function logoSlotHTML(company) {
+    const initials = markFor(company.company);
+    if (!CONFIG.logoToken || !company.logoDomain) {
+      return `<div class="logo-slot"><span class="logo-fallback">${escapeHTML(initials)}</span></div>`;
+    }
+    const src = `https://img.logo.dev/${encodeURIComponent(company.logoDomain)}?token=${encodeURIComponent(CONFIG.logoToken)}&size=64&retina=true`;
+    return `
+      <div class="logo-slot">
+        <img src="${src}" alt="${escapeHTML(company.company)} logo"
+             loading="lazy" decoding="async"
+             data-initials="${escapeHTML(initials)}">
+      </div>`;
+  }
+
+  function rowHTML(company, rank) {
+    let rankCell;
+    if (rank <= 3) {
+      const cls = rank === 1 ? "gold" : rank === 2 ? "silver" : "bronze";
+      rankCell = `<div class="col-rank"><span class="medal ${cls}">${rank}</span></div>`;
+    } else {
+      rankCell = `<div class="col-rank">${rank}</div>`;
+    }
+    return `
+      <div class="row reveal">
+        ${rankCell}
+        <div class="col-company">
+          ${logoSlotHTML(company)}
+          <div class="company-name">${escapeHTML(company.company)}</div>
+        </div>
+        <div class="col-count">${company.count}<span class="col-count-label">readers</span></div>
+      </div>`;
+  }
+
+  function renderStats(totals) {
+    const el = document.getElementById("stats");
+    el.innerHTML = `
+      <div class="stat reveal"><div class="stat-num">${totals.activeSubscribers.toLocaleString()}</div><div class="stat-label">Subscribers</div></div>
+      <div class="stat reveal"><div class="stat-num">${totals.companies.toLocaleString()}</div><div class="stat-label">Organisations</div></div>
+      <div class="stat reveal"><div class="stat-num">${totals.attributedReaders.toLocaleString()}</div><div class="stat-label">Attributed readers</div></div>
+    `;
+  }
+
+  function renderUpdated(iso) {
+    const d = new Date(iso);
+    const formatted = d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    document.getElementById("updated").textContent = `Last updated · ${formatted}`;
+  }
+
+  function showError(message) {
+    const board = document.getElementById("board");
+    board.innerHTML = `<div class="error-box" style="margin: 20px;">${escapeHTML(message)}</div>`;
+    document.getElementById("updated").textContent = "";
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Load data
+  // ───────────────────────────────────────────────────────────────────────
+  async function load() {
+    try {
+      const [configRes, dataRes] = await Promise.all([
+        fetch("/api/config", { headers: { Accept: "application/json" } }),
+        fetch(CONFIG.dataUrl, { headers: { Accept: "application/json" } }),
+      ]);
+
+      if (configRes.ok) {
+        const { logoToken } = await configRes.json();
+        CONFIG.logoToken = params.get("logoToken") || logoToken || "";
+      }
+
+      if (!dataRes.ok) {
+        const body = await dataRes.text();
+        throw new Error(`Couldn't load leaderboard (${dataRes.status}). ${body.slice(0, 200)}`);
+      }
+      const data = await dataRes.json();
+      render(data);
+    } catch (err) {
+      console.error(err);
+      showError(err.message || "Couldn't load the leaderboard right now.");
+    }
+  }
+
+  function render(data) {
+    const companies = (data.companies || []).filter((c) => c.count >= CONFIG.minReaders);
+    if (companies.length === 0) {
+      showError("No data available yet.");
+      return;
+    }
+
+    renderStats(data.totals);
+    renderUpdated(data.generatedAt);
+
+    const cap = CONFIG.maxRows > 0 ? Math.min(companies.length, CONFIG.maxRows) : companies.length;
+    const cappedCompanies = companies.slice(0, cap);
+
+    const rows = document.getElementById("rows");
+    rows.classList.remove("skeleton");
+
+    let shown = CONFIG.initialRows > 0 ? Math.min(CONFIG.initialRows, cap) : cap;
+
+    function paint() {
+      rows.innerHTML = cappedCompanies.slice(0, shown).map((c, i) => rowHTML(c, i + 1)).join("");
+
+      const moreBtn = document.getElementById("more-btn");
+      const footerNote = document.getElementById("footer-note");
+
+      if (shown < cap) {
+        moreBtn.hidden = false;
+        moreBtn.textContent = `Show next ${Math.min(30, cap - shown)} →`;
+      } else {
+        moreBtn.hidden = true;
+        footerNote.hidden = false;
+        const total = data.totals.attributedReaders.toLocaleString();
+        const orgs = companies.length.toLocaleString();
+        const beyondCap = companies.length - cap;
+        const hiddenByMin = (data.companies?.length || 0) - companies.length;
+        const minTail = hiddenByMin > 0
+          ? ` ${hiddenByMin.toLocaleString()} organisations below ${CONFIG.minReaders} reader${CONFIG.minReaders === 1 ? "" : "s"} aren't shown.`
+          : "";
+        const tail = beyondCap > 0
+          ? ` ${beyondCap.toLocaleString()} smaller organisations aren't listed above.`
+          : "";
+        footerNote.innerHTML = `<strong>${total} readers across ${orgs} organisations.</strong>${tail}${minTail}`;
+      }
+    }
+
+    document.getElementById("more-btn").addEventListener("click", () => {
+      shown = Math.min(shown + 30, cap);
+      paint();
+    });
+
+    paint();
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>
