@@ -511,24 +511,32 @@
     const root = document.querySelector(".root");
     if (!root) return Math.ceil(document.body.offsetHeight);
     const bodyPad = parseFloat(getComputedStyle(document.body).paddingBottom) || 0;
-    return Math.ceil(root.getBoundingClientRect().bottom + bodyPad + 2);
+    // offsetHeight is stable even when the iframe viewport is tiny during load
+    return Math.ceil(root.offsetTop + root.offsetHeight + bodyPad + 2);
   }
 
   function notifyEmbedHeight() {
     if (!isEmbedded) return;
-    window.parent.postMessage(
-      { type: "reader-leaderboard:resize", height: contentHeight() },
-      "*"
-    );
+    const height = Math.max(480, contentHeight());
+    window.parent.postMessage({ type: "reader-leaderboard:resize", height }, "*");
+  }
+
+  function burstEmbedHeightUpdates() {
+    notifyEmbedHeight();
+    let n = 0;
+    const id = setInterval(() => {
+      notifyEmbedHeight();
+      if (++n >= 12) clearInterval(id);
+    }, 400);
   }
 
   if (isEmbedded) {
     document.documentElement.classList.add("embedded");
     const root = document.querySelector(".root");
     if (root) new ResizeObserver(() => notifyEmbedHeight()).observe(root);
-    window.addEventListener("load", notifyEmbedHeight);
+    window.addEventListener("load", burstEmbedHeightUpdates);
     window.addEventListener("message", (e) => {
-      if (e.data?.type === "reader-leaderboard:request-height") notifyEmbedHeight();
+      if (e.data?.type === "reader-leaderboard:request-height") burstEmbedHeightUpdates();
     });
   }
 
@@ -610,9 +618,8 @@
     });
 
     paint();
+    burstEmbedHeightUpdates();
   }
-
-  load();
 })();
 </script>
 </body>
