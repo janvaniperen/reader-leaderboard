@@ -1,9 +1,8 @@
 /**
  * GET /api/config
  *
- * Returns public embed settings from environment variables.
- * The logo.dev publishable token is safe to expose to the browser —
- * logo.dev expects it in client-side image URLs.
+ * Public embed settings (reserved for future white-label options).
+ * Logo token is no longer exposed — logos are served via /api/logo.
  */
 
 export const config = {
@@ -11,17 +10,12 @@ export const config = {
 };
 
 export default async function handler() {
-  return new Response(
-    JSON.stringify({
-      logoToken: process.env.LOGO_DEV_TOKEN || "",
-    }),
-    {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "public, s-maxage=3600",
-        "Access-Control-Allow-Origin": "*",
-      },
-    }
-  );
+  return new Response(JSON.stringify({}), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "public, s-maxage=3600",
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
 }

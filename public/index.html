@@ -7,7 +7,6 @@
 <meta name="description" content="The companies subscribed to this newsletter, ranked by reader count.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://img.logo.dev" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -369,9 +368,6 @@
     // /api/leaderboard, but can point elsewhere for multi-tenant setups.
     dataUrl: params.get("data") || "/api/leaderboard",
 
-    // Loaded from /api/config (LOGO_DEV_TOKEN env var). URL param overrides for multi-tenant embeds.
-    logoToken: "",
-
     // How many rows to show before "Show more". Set 0 to show everything.
     initialRows: parseIntParam(params.get("initial"), 20, { min: 0, max: 500 }),
 
@@ -449,10 +445,10 @@
 
   function logoSlotHTML(company) {
     const initials = markFor(company.company);
-    if (!CONFIG.logoToken || !company.logoDomain) {
+    if (!company.logoDomain) {
       return `<div class="logo-slot"><span class="logo-fallback">${escapeHTML(initials)}</span></div>`;
     }
-    const src = `https://img.logo.dev/${encodeURIComponent(company.logoDomain)}?token=${encodeURIComponent(CONFIG.logoToken)}&size=64&retina=true`;
+    const src = `/api/logo?domain=${encodeURIComponent(company.logoDomain)}`;
     return `
       <div class="logo-slot">
         <img src="${src}" alt="${escapeHTML(company.company)} logo"
@@ -545,15 +541,9 @@
   // ───────────────────────────────────────────────────────────────────────
   async function load() {
     try {
-      const [configRes, dataRes] = await Promise.all([
-        fetch("/api/config", { headers: { Accept: "application/json" } }),
-        fetch(CONFIG.dataUrl, { headers: { Accept: "application/json" } }),
-      ]);
-
-      if (configRes.ok) {
-        const { logoToken } = await configRes.json();
-        CONFIG.logoToken = params.get("logoToken") || logoToken || "";
-      }
+      const dataRes = await fetch(CONFIG.dataUrl, {
+        headers: { Accept: "application/json" },
+      });
 
       if (!dataRes.ok) {
         const body = await dataRes.text();
