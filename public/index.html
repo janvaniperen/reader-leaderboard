@@ -118,6 +118,33 @@
     margin-bottom: 28px;
   }
 
+  /* ───── View toggle ───── */
+  .view-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .view-btn {
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--rule);
+    background: white;
+    color: var(--ink-soft);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .view-btn:hover { background: var(--bg-tint); border-color: var(--ink-soft); }
+  .view-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
   /* ───── Leaderboard ───── */
   .board {
     background: white;
@@ -208,6 +235,15 @@
     font-weight: 600;
     color: var(--ink);
     font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .company-meta {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    margin-top: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -318,6 +354,11 @@
     <h1 id="title">The organisations <em id="title-em">reading along</em></h1>
     <p class="subtitle" id="subtitle">Ranked by number of active subscribers from each company. Updated nightly.</p>
 
+    <div class="view-toggle" id="view-toggle" hidden>
+      <button type="button" class="view-btn active" data-view="readers">By readers</button>
+      <button type="button" class="view-btn" data-view="impact">By impact</button>
+    </div>
+
     <div class="stats" id="stats">
       <div class="stat"><div class="stat-num">—</div><div class="stat-label">Subscribers</div></div>
       <div class="stat"><div class="stat-num">—</div><div class="stat-label">Organisations</div></div>
@@ -330,7 +371,7 @@
     <div class="board-head">
       <div>Rank</div>
       <div>Organisation</div>
-      <div style="text-align: right;">Readers</div>
+      <div id="metric-head" style="text-align: right;">Readers</div>
     </div>
     <div id="rows" class="skeleton">
       <!-- Skeleton rows -->
@@ -457,6 +498,47 @@
       </div>`;
   }
 
+  const REFERRAL_WEIGHT = 3;
+  let boardState = null;
+
+  function normalizeCompany(c) {
+    const referrals = c.referrals ?? 0;
+    const newReferrals = c.newReferrals ?? 0;
+    const impact = c.impact ?? c.count + referrals * REFERRAL_WEIGHT;
+    return { ...c, referrals, newReferrals, impact };
+  }
+
+  function sortCompanies(companies, mode) {
+    const sorted = [...companies];
+    if (mode === "impact") {
+      sorted.sort((a, b) => {
+        if (b.impact !== a.impact) return b.impact - a.impact;
+        if (b.referrals !== a.referrals) return b.referrals - a.referrals;
+        return a.company.localeCompare(b.company);
+      });
+    } else {
+      sorted.sort((a, b) => {
+        if (b.count !== a.count) return b.count - a.count;
+        return a.company.localeCompare(b.company);
+      });
+    }
+    return sorted;
+  }
+
+  function companyMetaHTML(company) {
+    const parts = [];
+    if (boardState.viewMode === "impact") {
+      parts.push(`${company.count} reader${company.count === 1 ? "" : "s"}`);
+    }
+    if (company.referrals) {
+      let ref = `${company.referrals} referred`;
+      if (company.newReferrals) ref += ` · ${company.newReferrals} new`;
+      parts.push(ref);
+    }
+    if (!parts.length) return "";
+    return `<div class="company-meta">${escapeHTML(parts.join(" · "))}</div>`;
+  }
+
   function rowHTML(company, rank) {
     let rankCell;
     if (rank <= 3) {
@@ -465,15 +547,80 @@
     } else {
       rankCell = `<div class="col-rank">${rank}</div>`;
     }
+    const metric =
+      boardState.viewMode === "impact"
+        ? `${company.impact}<span class="col-count-label">impact</span>`
+        : `${company.count}<span class="col-count-label">readers</span>`;
     return `
       <div class="row reveal">
         ${rankCell}
         <div class="col-company">
           ${logoSlotHTML(company)}
-          <div class="company-name">${escapeHTML(company.company)}</div>
+          <div>
+            <div class="company-name">${escapeHTML(company.company)}</div>
+            ${companyMetaHTML(company)}
+          </div>
         </div>
-        <div class="col-count">${company.count}<span class="col-count-label">readers</span></div>
+        <div class="col-count">${metric}</div>
       </div>`;
+  }
+
+  function updateViewUI() {
+    document.getElementById("metric-head").textContent =
+      boardState.viewMode === "impact" ? "Impact" : "Readers";
+    document.querySelectorAll(".view-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.view === boardState.viewMode);
+    });
+    document.getElementById("subtitle").textContent =
+      boardState.viewMode === "impact"
+        ? `Ranked by impact — readers plus ${REFERRAL_WEIGHT}× each subscriber referred. Updated nightly.`
+        : CONFIG.subtitle;
+  }
+
+  function setViewMode(mode) {
+    if (!boardState || boardState.viewMode === mode) return;
+    boardState.viewMode = mode;
+    boardState.sorted = sortCompanies(boardState.companies, mode);
+    boardState.shown =
+      CONFIG.initialRows > 0
+        ? Math.min(CONFIG.initialRows, boardState.cap)
+        : boardState.cap;
+    updateViewUI();
+    paintBoard();
+  }
+
+  function paintBoard() {
+    const { sorted, cap, shown, data } = boardState;
+    const rows = document.getElementById("rows");
+    rows.innerHTML = sorted.slice(0, shown).map((c, i) => rowHTML(c, i + 1)).join("");
+
+    const moreBtn = document.getElementById("more-btn");
+    const footerNote = document.getElementById("footer-note");
+
+    if (shown < cap) {
+      moreBtn.hidden = false;
+      moreBtn.textContent = `Show next ${Math.min(30, cap - shown)} →`;
+      footerNote.hidden = true;
+    } else {
+      moreBtn.hidden = true;
+      footerNote.hidden = false;
+      const total = data.totals.attributedReaders.toLocaleString();
+      const orgs = boardState.companies.length.toLocaleString();
+      const referred = (data.totals.referredSubscribers ?? 0).toLocaleString();
+      const beyondCap = boardState.companies.length - cap;
+      const hiddenByMin = (data.companies?.length || 0) - boardState.companies.length;
+      const minTail = hiddenByMin > 0
+        ? ` ${hiddenByMin.toLocaleString()} organisations below ${CONFIG.minReaders} reader${CONFIG.minReaders === 1 ? "" : "s"} aren't shown.`
+        : "";
+      const tail = beyondCap > 0
+        ? ` ${beyondCap.toLocaleString()} smaller organisations aren't listed above.`
+        : "";
+      const refTail = referred !== "0"
+        ? ` ${referred} subscribers joined via employee referrals.`
+        : "";
+      footerNote.innerHTML = `<strong>${total} readers across ${orgs} organisations.</strong>${refTail}${tail}${minTail}`;
+    }
+    notifyEmbedHeight();
   }
 
   function renderStats(totals) {
@@ -558,7 +705,9 @@
   }
 
   function render(data) {
-    const companies = (data.companies || []).filter((c) => c.count >= CONFIG.minReaders);
+    const companies = (data.companies || [])
+      .map(normalizeCompany)
+      .filter((c) => c.count >= CONFIG.minReaders);
     if (companies.length === 0) {
       showError("No data available yet.");
       return;
@@ -568,48 +717,34 @@
     renderUpdated(data.generatedAt);
 
     const cap = CONFIG.maxRows > 0 ? Math.min(companies.length, CONFIG.maxRows) : companies.length;
-    const cappedCompanies = companies.slice(0, cap);
+    const viewMode = "readers";
 
-    const rows = document.getElementById("rows");
-    rows.classList.remove("skeleton");
+    boardState = {
+      data,
+      companies,
+      viewMode,
+      sorted: sortCompanies(companies, viewMode),
+      cap,
+      shown: CONFIG.initialRows > 0 ? Math.min(CONFIG.initialRows, cap) : cap,
+    };
 
-    let shown = CONFIG.initialRows > 0 ? Math.min(CONFIG.initialRows, cap) : cap;
-
-    function paint() {
-      rows.innerHTML = cappedCompanies.slice(0, shown).map((c, i) => rowHTML(c, i + 1)).join("");
-
-      const moreBtn = document.getElementById("more-btn");
-      const footerNote = document.getElementById("footer-note");
-
-      if (shown < cap) {
-        moreBtn.hidden = false;
-        moreBtn.textContent = `Show next ${Math.min(30, cap - shown)} →`;
-      } else {
-        moreBtn.hidden = true;
-        footerNote.hidden = false;
-        const total = data.totals.attributedReaders.toLocaleString();
-        const orgs = companies.length.toLocaleString();
-        const beyondCap = companies.length - cap;
-        const hiddenByMin = (data.companies?.length || 0) - companies.length;
-        const minTail = hiddenByMin > 0
-          ? ` ${hiddenByMin.toLocaleString()} organisations below ${CONFIG.minReaders} reader${CONFIG.minReaders === 1 ? "" : "s"} aren't shown.`
-          : "";
-        const tail = beyondCap > 0
-          ? ` ${beyondCap.toLocaleString()} smaller organisations aren't listed above.`
-          : "";
-        footerNote.innerHTML = `<strong>${total} readers across ${orgs} organisations.</strong>${tail}${minTail}`;
-      }
-      notifyEmbedHeight();
-    }
-
-    document.getElementById("more-btn").addEventListener("click", () => {
-      shown = Math.min(shown + 30, cap);
-      paint();
-    });
-
-    paint();
+    document.getElementById("rows").classList.remove("skeleton");
+    document.getElementById("view-toggle").hidden = false;
+    updateViewUI();
+    paintBoard();
     burstEmbedHeightUpdates();
   }
+
+  document.getElementById("view-toggle").addEventListener("click", (e) => {
+    const btn = e.target.closest(".view-btn");
+    if (btn) setViewMode(btn.dataset.view);
+  });
+
+  document.getElementById("more-btn").addEventListener("click", () => {
+    if (!boardState) return;
+    boardState.shown = Math.min(boardState.shown + 30, boardState.cap);
+    paintBoard();
+  });
 
   load();
 })();

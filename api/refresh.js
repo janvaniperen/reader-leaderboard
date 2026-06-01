@@ -77,8 +77,8 @@ export default async function handler(req, res) {
 
   const t0 = Date.now();
   try {
-    const { emails, pagination } = await fetchActiveSubscribers({ publicationId, apiKey });
-    const result = aggregate(emails);
+    const { subscribers, pagination } = await fetchActiveSubscribers({ publicationId, apiKey });
+    const result = aggregate(subscribers);
 
     const payload = {
       generatedAt: new Date().toISOString(),
@@ -98,7 +98,7 @@ export default async function handler(req, res) {
 
     if (pagination.truncated) {
       response.warning =
-        `Fetched ${emails.length} subscribers but Beehiiv reports ${pagination.totalPages} pages ` +
+        `Fetched ${subscribers.length} subscribers but Beehiiv reports ${pagination.totalPages} pages ` +
         `(cap is ${pagination.maxPages} pages / ${pagination.subscriberCap} subscribers). ` +
         "Increase maxPages in lib/beehiiv.js or raise the function timeout.";
       console.warn("Refresh truncated:", response.warning);
