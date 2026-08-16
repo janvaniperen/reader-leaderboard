@@ -33,8 +33,16 @@ function safeEqual(a, b) {
   return timingSafeEqual(bufA, bufB);
 }
 
+function header(req, name) {
+  if (typeof req.headers?.get === "function") return req.headers.get(name);
+  const headers = req.headers || {};
+  return headers[name] || headers[name.toLowerCase()];
+}
+
 function isAuthorised(req) {
-  const auth = req.headers.get?.("authorization") || req.headers.authorization;
+  // Vercel Cron sends Authorization: Bearer <CRON_SECRET> when that env var is set.
+  // Manual runs use REFRESH_SECRET the same way.
+  const auth = header(req, "authorization");
   const cronSecret = process.env.CRON_SECRET;
   const refreshSecret = process.env.REFRESH_SECRET;
 

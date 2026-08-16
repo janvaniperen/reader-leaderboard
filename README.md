@@ -87,10 +87,11 @@ In **Settings → Environment Variables**, add:
 |---------------------------|-----------------------------------------------|
 | `BEEHIIV_API_KEY`         | From Beehiiv → Settings → Integrations → API  |
 | `BEEHIIV_PUBLICATION_ID`  | Starts with `pub_` (e.g. `pub_fb9f9fcf-…`)    |
-| `REFRESH_SECRET`          | `openssl rand -hex 32` — used for manual runs |
+| `REFRESH_SECRET`          | `openssl rand -hex 32` — used for manual `/api/refresh` runs |
+| `CRON_SECRET`             | `openssl rand -hex 32` — **required** so nightly Vercel Cron can authorize |
 | `LOGO_DEV_TOKEN`          | Publishable key from [logo.dev](https://logo.dev) (`pk_…`) |
 
-(`CRON_SECRET` is set automatically when Vercel Cron fires; you don't add it.)
+Without `CRON_SECRET`, the nightly cron hits `/api/refresh` and gets **401**, so KV never updates.
 
 Redeploy after adding env vars.
 
