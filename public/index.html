@@ -38,6 +38,7 @@
     font-size: 16px;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
+    padding-bottom: 88px;
   }
   .root {
     max-width: 880px;
@@ -118,31 +119,115 @@
     margin-bottom: 28px;
   }
 
-  /* ───── View toggle ───── */
-  .view-toggle {
+  .row-fold {
+    margin: 0 20px 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--rule-soft);
+  }
+  .rank-pair {
     display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
+    gap: 22px;
+    margin-bottom: 12px;
   }
-  .view-btn {
-    padding: 8px 16px;
-    border-radius: 999px;
-    border: 1px solid var(--rule);
-    background: white;
-    color: var(--ink-soft);
-    font-family: inherit;
-    font-size: 13px;
+  .rank-num {
+    font-family: 'Fraunces', serif;
     font-weight: 600;
-    cursor: pointer;
-    transition: all .15s;
+    font-size: 26px;
+    letter-spacing: -0.03em;
+    line-height: 1;
   }
-  .view-btn:hover { background: var(--bg-tint); border-color: var(--ink-soft); }
-  .view-btn.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: white;
+  .rank-num.better { color: var(--accent-dark); }
+  .rank-label {
+    margin-top: 3px;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .meter {
+    position: relative;
+    height: 8px;
+    max-width: 440px;
+    border-radius: 999px;
+    background: var(--rule-soft);
+    overflow: hidden;
+  }
+  .meter span {
+    position: absolute;
+    top: 0;
+    height: 100%;
+  }
+  .meter-base { left: 0; background: var(--ink); }
+  .meter-bonus { background: var(--accent); }
+  .fold-caption {
+    margin: 8px 0 0;
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: var(--ink-soft);
+    max-width: 62ch;
+  }
+  .fold-nudge {
+    margin: 8px 0 0;
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--accent-dark);
+    max-width: 62ch;
+  }
+  .refer-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px 28px;
+    padding: 12px 24px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    overflow: hidden;
+    background: var(--ink);
+    color: #fffdf6;
+    text-decoration: none;
+  }
+  .refer-pixels {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .refer-bar > :not(.refer-pixels) { position: relative; z-index: 1; }
+  .refer-bar:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -3px;
+  }
+  .refer-bar-kicker {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .refer-bar-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+  .refer-bar-note {
+    max-width: 36ch;
+    font-size: 12.5px;
+    line-height: 1.4;
+    text-align: right;
+    color: rgba(255, 253, 246, 0.78);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { animation: none; opacity: 1; transform: none; }
+    .row::before { transition: none; }
   }
 
   /* ───── Leaderboard ───── */
@@ -153,28 +238,129 @@
     overflow: hidden;
     box-shadow: var(--shadow);
   }
-  .board-head {
+  .board-head,
+  .row-line,
+  .skeleton .row {
     display: grid;
-    grid-template-columns: 60px 1fr 80px;
+    grid-template-columns: 52px minmax(0, 1fr) 72px 72px;
+    column-gap: 8px;
+  }
+  .board-head {
     padding: 12px 20px;
     background: var(--bg-warm);
     border-bottom: 1px solid var(--rule);
+    align-items: end;
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--ink-soft);
   }
+  .col-sort {
+    appearance: none;
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    padding: 0 0 3px;
+    font: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    text-align: right;
+    cursor: pointer;
+    justify-self: end;
+  }
+  .col-sort[aria-pressed="true"] {
+    color: var(--accent-dark);
+    border-bottom-color: var(--accent);
+  }
+  .col-sort:focus-visible,
+  .row:focus-visible {
+    outline: 2px solid var(--accent-dark);
+    outline-offset: 2px;
+  }
   .row {
-    display: grid;
-    grid-template-columns: 60px 1fr 80px;
-    padding: 14px 20px;
-    align-items: center;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     border-bottom: 1px solid var(--rule-soft);
-    transition: background .15s;
+    cursor: pointer;
   }
   .row:last-child { border-bottom: none; }
-  .row:hover { background: var(--bg-tint); }
+  .row::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--bg-tint);
+    transform: translateX(-101%);
+    transition: transform .48s cubic-bezier(.22, .7, .28, 1);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .row:hover::before,
+  .row.selected::before { transform: translateX(0); }
+  .row.selected { box-shadow: inset 3px 0 0 var(--accent); }
+  .row-line {
+    position: relative;
+    z-index: 1;
+    padding: 5px 20px;
+    align-items: center;
+  }
+  .row-mark {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 50%;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 28%);
+    mask-image: linear-gradient(90deg, transparent, #000 28%);
+  }
+  .row-mark img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    object-position: center;
+    opacity: 0.13;
+    mix-blend-mode: multiply;
+  }
+  .row-mark-fallback {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 64px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+    opacity: 0.05;
+  }
+  .row-fold { position: relative; z-index: 1; }
+  .col-impact { color: var(--accent-dark); }
+  @media (max-width: 520px) {
+    .board-head, .row-line, .skeleton .row {
+      grid-template-columns: 40px minmax(0, 1fr) 52px 52px;
+    }
+    .board-head, .row-line {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+    .row-fold { margin-left: 12px; margin-right: 12px; }
+    .col-count { font-size: 16px; }
+    body { padding-bottom: 118px; }
+    .refer-bar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 12px 16px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+    .refer-bar-note { text-align: left; max-width: none; }
+  }
   .col-rank {
     font-family: 'Fraunces', serif;
     font-size: 18px;
@@ -211,19 +397,15 @@
     min-width: 0; /* let truncation work in grid */
   }
   .logo-slot {
-    width: 32px; height: 32px;
-    border-radius: 8px;
-    background: var(--bg-warm);
-    border: 1px solid var(--rule);
+    width: 48px; height: 48px;
+    background: none;
+    border: 0;
     display: flex; align-items: center; justify-content: center;
-    overflow: hidden;
     flex-shrink: 0;
-    position: relative;
   }
   .logo-slot img {
     width: 100%; height: 100%;
     object-fit: contain;
-    padding: 4px;
   }
   .logo-fallback {
     font-family: 'Fraunces', serif;
@@ -265,6 +447,9 @@
   }
 
   /* ───── More button & footer ───── */
+  .more-btn[hidden],
+  #board[hidden] { display: none !important; }
+
   .more-btn {
     display: block;
     margin: 16px auto 0;
@@ -351,17 +536,12 @@
 <div class="root">
   <div class="header">
     <div class="eyebrow"><span class="eyebrow-dot"></span><span id="eyebrow-text">Reader Leaderboard</span></div>
-    <h1 id="title">The organisations <em id="title-em">reading along</em></h1>
-    <p class="subtitle" id="subtitle">Ranked by number of active subscribers from each company. Updated nightly.</p>
-
-    <div class="view-toggle" id="view-toggle" hidden>
-      <button type="button" class="view-btn active" data-view="readers">By readers</button>
-      <button type="button" class="view-btn" data-view="impact">By impact</button>
-    </div>
+    <h1 id="title">The organizations <em id="title-em">reading along</em></h1>
+    <p class="subtitle" id="subtitle">Readers by organization. A referral can be anyone, and it still counts for the company. Updated nightly.</p>
 
     <div class="stats" id="stats">
       <div class="stat"><div class="stat-num">—</div><div class="stat-label">Subscribers</div></div>
-      <div class="stat"><div class="stat-num">—</div><div class="stat-label">Organisations</div></div>
+      <div class="stat"><div class="stat-num">—</div><div class="stat-label">Organizations</div></div>
       <div class="stat"><div class="stat-num">—</div><div class="stat-label">Attributed readers</div></div>
     </div>
     <p class="updated" id="updated">Loading latest data…</p>
@@ -370,8 +550,9 @@
   <div class="board" id="board">
     <div class="board-head">
       <div>Rank</div>
-      <div>Organisation</div>
-      <div id="metric-head" style="text-align: right;">Readers</div>
+      <div>Organization</div>
+      <button type="button" class="col-sort" data-sort="readers" aria-pressed="true" title="Sort by readers">Readers</button>
+      <button type="button" class="col-sort" data-sort="impact" aria-pressed="false" title="Sort by impact: readers plus 3 for each referral">Impact</button>
     </div>
     <div id="rows" class="skeleton">
       <!-- Skeleton rows -->
@@ -389,6 +570,15 @@
     Logos by <a href="https://logo.dev" rel="noopener" target="_blank">Logo.dev</a>
   </div>
 </div>
+
+<a class="refer-bar" href="https://juicenews.com/login" target="_blank" rel="noopener noreferrer">
+  <canvas class="refer-pixels" aria-hidden="true"></canvas>
+  <span>
+    <span class="refer-bar-kicker">Raise the ranks</span>
+    <span class="refer-bar-title">Refer a new reader</span>
+  </span>
+  <span class="refer-bar-note">Log in with the address that gets Juice News. Your referral link is in the profile, and it counts for anyone you invite.</span>
+</a>
 
 <script>
 (() => {
@@ -409,19 +599,22 @@
     // /api/leaderboard, but can point elsewhere for multi-tenant setups.
     dataUrl: params.get("data") || "/api/leaderboard",
 
+    // List sort. view=impact keeps older links opening ranked by impact.
+    sort: params.get("view") === "impact" ? "impact" : "readers",
+
     // How many rows to show before "Show more". Set 0 to show everything.
     initialRows: parseIntParam(params.get("initial"), 20, { min: 0, max: 500 }),
 
     // Max rows ever shown (privacy: small companies behind the cutoff aren't named).
     maxRows: parseIntParam(params.get("max"), 100, { min: 0, max: 500 }),
 
-    // Hide organisations with fewer than this many readers (privacy).
+    // Hide organizations with fewer than this many readers (privacy).
     minReaders: parseIntParam(params.get("min"), 1, { min: 1, max: 100 }),
 
     // Copy overrides
     eyebrow: params.get("eyebrow") || "Reader Leaderboard",
-    title: params.get("title") || "The organisations <em>reading along</em>",
-    subtitle: params.get("subtitle") || "Ranked by number of active subscribers from each company. Updated nightly.",
+    title: params.get("title") || "The organizations <em>reading along</em>",
+    subtitle: params.get("subtitle") || "Readers by organization. A referral can be anyone, and it still counts for the company. Updated nightly.",
 
     // Theme overrides (any CSS var name → value)
     theme: extractTheme(params),
@@ -448,12 +641,17 @@
   document.getElementById("title").innerHTML = sanitizeTitle(CONFIG.title);
   document.getElementById("subtitle").textContent = CONFIG.subtitle;
 
+  if (CONFIG.sort === "impact") {
+    document.querySelector('.col-sort[data-sort="readers"]').setAttribute("aria-pressed", "false");
+    document.querySelector('.col-sort[data-sort="impact"]').setAttribute("aria-pressed", "true");
+  }
+
   // Swap broken logo.dev images for initials fallback
-  document.getElementById("board").addEventListener("error", (e) => {
+  document.querySelector(".root").addEventListener("error", (e) => {
     const img = e.target;
     if (img.tagName !== "IMG" || !img.dataset.initials) return;
     const span = document.createElement("span");
-    span.className = "logo-fallback";
+    span.className = img.dataset.mark ? "row-mark-fallback" : "logo-fallback";
     span.textContent = img.dataset.initials;
     img.replaceWith(span);
   }, true);
@@ -498,6 +696,21 @@
       </div>`;
   }
 
+  function logoMarkHTML(company) {
+    const initials = markFor(company.company);
+    if (!company.logoDomain) {
+      return `<div class="row-mark" aria-hidden="true"><span class="row-mark-fallback">${escapeHTML(initials)}</span></div>`;
+    }
+    const src = `/api/logo?domain=${encodeURIComponent(company.logoDomain)}`;
+    return `
+      <div class="row-mark" aria-hidden="true">
+        <img src="${src}" alt=""
+             loading="lazy" decoding="async"
+             data-mark="1"
+             data-initials="${escapeHTML(initials)}">
+      </div>`;
+  }
+
   const REFERRAL_WEIGHT = 3;
   let boardState = null;
 
@@ -526,17 +739,10 @@
   }
 
   function companyMetaHTML(company) {
-    const parts = [];
-    if (boardState.viewMode === "impact") {
-      parts.push(`${company.count} reader${company.count === 1 ? "" : "s"}`);
-    }
-    if (company.referrals) {
-      let ref = `${company.referrals} referred`;
-      if (company.newReferrals) ref += ` · ${company.newReferrals} new`;
-      parts.push(ref);
-    }
-    if (!parts.length) return "";
-    return `<div class="company-meta">${escapeHTML(parts.join(" · "))}</div>`;
+    if (!company.referrals) return "";
+    let ref = `${company.referrals} referred`;
+    if (company.newReferrals) ref += `, ${company.newReferrals} new`;
+    return `<div class="company-meta">${escapeHTML(ref)}</div>`;
   }
 
   function rowHTML(company, rank) {
@@ -547,45 +753,155 @@
     } else {
       rankCell = `<div class="col-rank">${rank}</div>`;
     }
-    const metric =
-      boardState.viewMode === "impact"
-        ? `${company.impact}<span class="col-count-label">impact</span>`
-        : `${company.count}<span class="col-count-label">readers</span>`;
+    const selected = company.company === boardState.selected;
+    const impactClass = company.impact > company.count ? " col-impact" : "";
+    const fold = selected ? foldHTML(company) : "";
     return `
-      <div class="row reveal">
-        ${rankCell}
-        <div class="col-company">
-          ${logoSlotHTML(company)}
-          <div>
-            <div class="company-name">${escapeHTML(company.company)}</div>
-            ${companyMetaHTML(company)}
+      <div class="row${selected ? " selected" : ""}" role="button" tabindex="0"
+        data-company="${escapeHTML(company.company)}"
+        aria-expanded="${selected ? "true" : "false"}">
+        ${logoMarkHTML(company)}
+        <div class="row-line">
+          ${rankCell}
+          <div class="col-company">
+            ${logoSlotHTML(company)}
+            <div>
+              <div class="company-name">${escapeHTML(company.company)}</div>
+              ${companyMetaHTML(company)}
+            </div>
           </div>
+          <div class="col-count">${company.count}</div>
+          <div class="col-count${impactClass}">${company.impact}</div>
         </div>
-        <div class="col-count">${metric}</div>
+        ${fold}
       </div>`;
   }
 
-  function updateViewUI() {
-    document.getElementById("metric-head").textContent =
-      boardState.viewMode === "impact" ? "Impact" : "Readers";
-    document.querySelectorAll(".view-btn").forEach((btn) => {
-      btn.classList.toggle("active", btn.dataset.view === boardState.viewMode);
-    });
-    document.getElementById("subtitle").textContent =
-      boardState.viewMode === "impact"
-        ? `Ranked by impact — readers plus ${REFERRAL_WEIGHT}× each subscriber referred. Updated nightly.`
-        : CONFIG.subtitle;
+  function ordinal(n) {
+    const v = n % 100;
+    if (v >= 11 && v <= 13) return `${n}th`;
+    switch (n % 10) {
+      case 1: return `${n}st`;
+      case 2: return `${n}nd`;
+      case 3: return `${n}rd`;
+      default: return `${n}th`;
+    }
   }
 
-  function setViewMode(mode) {
-    if (!boardState || boardState.viewMode === mode) return;
-    boardState.viewMode = mode;
+  function companyRanks(company, companies) {
+    const readerRank = sortCompanies(companies, "readers").findIndex((c) => c.company === company.company) + 1;
+    const impactRank = sortCompanies(companies, "impact").findIndex((c) => c.company === company.company) + 1;
+    return { readerRank, impactRank };
+  }
+
+  function referralNudge(company, companies) {
+    // Chase the next organization above on the list the reader is looking at,
+    // and only if that organization's impact score is actually higher.
+    // A tie (same impact, fewer readers) is not someone to catch.
+    const ranked = sortCompanies(companies, boardState?.sort || "readers");
+    const idx = ranked.findIndex((c) => c.company === company.company);
+    let target = null;
+    for (let i = idx - 1; i >= 0; i--) {
+      if (ranked[i].impact > company.impact) {
+        target = ranked[i];
+        break;
+      }
+    }
+    if (!target) {
+      if (company.referrals > 0) {
+        const worth = company.referrals * REFERRAL_WEIGHT;
+        return `Ahead on impact of everyone above. Those referrals add ${worth}, whoever was invited.`;
+      }
+      if (idx <= 0) {
+        return `Leads this list. One referral, to anyone, is worth ${REFERRAL_WEIGHT} readers on impact.`;
+      }
+      return `Already ahead on impact of the organizations above. One referral, to anyone, is worth ${REFERRAL_WEIGHT} readers.`;
+    }
+    const needed = Math.max(1, Math.ceil((target.impact - company.impact + 1) / REFERRAL_WEIGHT));
+    const people = needed === 1 ? "One more referral, to anyone," : `${needed} more referrals, to anyone,`;
+    return `${people} would put ${company.company} ahead of ${target.company} on impact.`;
+  }
+
+  function foldHTML(company) {
+    const { readerRank, impactRank } = companyRanks(company, boardState.companies);
+    const maxImpact = Math.max(...boardState.companies.map((c) => c.impact), 1);
+    const bonus = company.referrals * REFERRAL_WEIGHT;
+    const impactPct = Math.max(6, (company.impact / maxImpact) * 100);
+    const bonusPct = company.impact ? (bonus / company.impact) * impactPct : 0;
+    const basePct = impactPct - bonusPct;
+    const impactBetter = impactRank < readerRank;
+    const fresh = company.newReferrals > 0
+      ? ` ${company.newReferrals} joined in the last 90 days.`
+      : "";
+    const detail = company.referrals
+      ? `${company.count.toLocaleString()} readers. +${bonus} comes from ${company.referrals} referral${company.referrals === 1 ? "" : "s"}.${fresh} The person referred does not have to work at ${company.company}.`
+      : `${company.count.toLocaleString()} readers, and no referrals yet. The person referred does not have to work at ${company.company}. Each referral is worth ${REFERRAL_WEIGHT} readers.`;
+    return `
+      <div class="row-fold">
+        <div class="rank-pair">
+          <div>
+            <div class="rank-num">${ordinal(readerRank)}</div>
+            <div class="rank-label">by readers</div>
+          </div>
+          <div>
+            <div class="rank-num${impactBetter ? " better" : ""}">${ordinal(impactRank)}</div>
+            <div class="rank-label">by impact</div>
+          </div>
+        </div>
+        <div class="meter" aria-hidden="true">
+          <span class="meter-base" style="width:${basePct}%"></span>
+          <span class="meter-bonus" style="left:${basePct}%;width:${bonusPct}%"></span>
+        </div>
+        <p class="fold-caption">${escapeHTML(detail)}</p>
+        <p class="fold-nudge">${escapeHTML(referralNudge(company, boardState.companies))}</p>
+      </div>`;
+  }
+
+  function markSelection() {
+    const name = boardState.selected;
+    document.querySelectorAll("#rows .row").forEach((row) => {
+      const on = row.dataset.company === name;
+      row.classList.toggle("selected", on);
+      row.setAttribute("aria-expanded", on ? "true" : "false");
+      const existing = row.querySelector(".row-fold");
+      if (!on) {
+        existing?.remove();
+        return;
+      }
+      if (existing) return;
+      const company = boardState.companies.find((c) => c.company === name);
+      if (!company) return;
+      row.insertAdjacentHTML("beforeend", foldHTML(company));
+    });
+  }
+
+  function selectCompany(name) {
+    if (!boardState || !name) return;
+    boardState.selected = boardState.selected === name ? null : name;
+    markSelection();
+    notifyEmbedHeight();
+  }
+
+  function syncSortButtons() {
+    document.querySelectorAll(".col-sort").forEach((btn) => {
+      btn.setAttribute("aria-pressed", btn.dataset.sort === boardState.sort ? "true" : "false");
+    });
+  }
+
+  function setSort(mode) {
+    if (!boardState || boardState.sort === mode) return;
+    if (mode !== "readers" && mode !== "impact") return;
+    boardState.sort = mode;
     boardState.sorted = sortCompanies(boardState.companies, mode);
     boardState.shown =
       CONFIG.initialRows > 0
         ? Math.min(CONFIG.initialRows, boardState.cap)
         : boardState.cap;
-    updateViewUI();
+    const idx = boardState.sorted.findIndex((c) => c.company === boardState.selected);
+    if (idx >= boardState.shown) {
+      boardState.shown = Math.min(boardState.cap, idx + 1);
+    }
+    syncSortButtons();
     paintBoard();
   }
 
@@ -610,15 +926,15 @@
       const beyondCap = boardState.companies.length - cap;
       const hiddenByMin = (data.companies?.length || 0) - boardState.companies.length;
       const minTail = hiddenByMin > 0
-        ? ` ${hiddenByMin.toLocaleString()} organisations below ${CONFIG.minReaders} reader${CONFIG.minReaders === 1 ? "" : "s"} aren't shown.`
+        ? ` ${hiddenByMin.toLocaleString()} organizations below ${CONFIG.minReaders} reader${CONFIG.minReaders === 1 ? "" : "s"} aren't shown.`
         : "";
       const tail = beyondCap > 0
-        ? ` ${beyondCap.toLocaleString()} smaller organisations aren't listed above.`
+        ? ` ${beyondCap.toLocaleString()} smaller organizations aren't listed above.`
         : "";
       const refTail = referred !== "0"
-        ? ` ${referred} subscribers joined via employee referrals.`
+        ? ` ${referred} subscribers joined through referrals, including people outside the referrer's organization.`
         : "";
-      footerNote.innerHTML = `<strong>${total} readers across ${orgs} organisations.</strong>${refTail}${tail}${minTail}`;
+      footerNote.innerHTML = `<strong>${total} readers across ${orgs} organizations.</strong>${refTail}${tail}${minTail}`;
     }
     notifyEmbedHeight();
   }
@@ -627,7 +943,7 @@
     const el = document.getElementById("stats");
     el.innerHTML = `
       <div class="stat reveal"><div class="stat-num">${totals.activeSubscribers.toLocaleString()}</div><div class="stat-label">Subscribers</div></div>
-      <div class="stat reveal"><div class="stat-num">${totals.companies.toLocaleString()}</div><div class="stat-label">Organisations</div></div>
+      <div class="stat reveal"><div class="stat-num">${totals.companies.toLocaleString()}</div><div class="stat-label">Organizations</div></div>
       <div class="stat reveal"><div class="stat-num">${totals.attributedReaders.toLocaleString()}</div><div class="stat-label">Attributed readers</div></div>
     `;
   }
@@ -640,6 +956,7 @@
 
   function showError(message) {
     const board = document.getElementById("board");
+    board.hidden = false;
     board.innerHTML = `<div class="error-box" style="margin: 20px;">${escapeHTML(message)}</div>`;
     document.getElementById("updated").textContent = "";
     notifyEmbedHeight();
@@ -717,27 +1034,42 @@
     renderUpdated(data.generatedAt);
 
     const cap = CONFIG.maxRows > 0 ? Math.min(companies.length, CONFIG.maxRows) : companies.length;
-    const viewMode = "readers";
+    const sort = CONFIG.sort;
 
     boardState = {
       data,
       companies,
-      viewMode,
-      sorted: sortCompanies(companies, viewMode),
+      sort,
+      selected: null,
+      sorted: sortCompanies(companies, sort),
       cap,
       shown: CONFIG.initialRows > 0 ? Math.min(CONFIG.initialRows, cap) : cap,
     };
 
     document.getElementById("rows").classList.remove("skeleton");
-    document.getElementById("view-toggle").hidden = false;
-    updateViewUI();
+    syncSortButtons();
     paintBoard();
     burstEmbedHeightUpdates();
   }
 
-  document.getElementById("view-toggle").addEventListener("click", (e) => {
-    const btn = e.target.closest(".view-btn");
-    if (btn) setViewMode(btn.dataset.view);
+  document.getElementById("board").addEventListener("click", (e) => {
+    const sortBtn = e.target.closest(".col-sort");
+    if (sortBtn) {
+      setSort(sortBtn.dataset.sort);
+      return;
+    }
+    if (e.target.closest(".row-fold")) return;
+    const row = e.target.closest(".row");
+    if (row?.dataset.company) selectCompany(row.dataset.company);
+  });
+
+  document.getElementById("rows").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    if (e.target.closest(".row-fold")) return;
+    const row = e.target.closest(".row");
+    if (!row?.dataset.company) return;
+    e.preventDefault();
+    selectCompany(row.dataset.company);
   });
 
   document.getElementById("more-btn").addEventListener("click", () => {
@@ -746,7 +1078,84 @@
     paintBoard();
   });
 
+  startReferPixels();
   load();
+
+  function startReferPixels() {
+    const bar = document.querySelector(".refer-bar");
+    const canvas = document.querySelector(".refer-pixels");
+    if (!bar || !canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const palette = ["#ff7a1a", "#ff9a4a", "#f5b400", "#ffe7c4"];
+    let width = 1;
+    let height = 1;
+    let hover = false;
+    let particles = [];
+    let raf = 0;
+
+    function makeParticle(anywhere) {
+      return {
+        x: Math.random() * width,
+        y: anywhere ? Math.random() * height : height + 4,
+        size: Math.random() < 0.55 ? 2 : 3,
+        vx: (Math.random() - 0.5) * 0.28,
+        vy: -(0.22 + Math.random() * 0.42),
+        phase: Math.random() * Math.PI * 2,
+        alpha: 0.72 + Math.random() * 0.28,
+        color: palette[(Math.random() * palette.length) | 0],
+      };
+    }
+
+    function resize() {
+      const rect = bar.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = Math.max(1, rect.width);
+      height = Math.max(1, rect.height);
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const count = Math.max(36, Math.round(width / 11));
+      particles = Array.from({ length: count }, () => makeParticle(true));
+    }
+
+    function tick() {
+      const boost = hover ? 2.6 : 1;
+      ctx.clearRect(0, 0, width, height);
+      for (const p of particles) {
+        p.phase += 0.03 * boost;
+        p.x += (p.vx + Math.sin(p.phase) * 0.22) * boost;
+        p.y += p.vy * boost;
+        if (p.y < -4 || p.x < -8 || p.x > width + 8) {
+          const next = makeParticle(false);
+          p.x = next.x;
+          p.y = height + 3;
+          p.size = next.size;
+          p.vx = next.vx;
+          p.vy = next.vy;
+          p.phase = next.phase;
+          p.alpha = next.alpha;
+          p.color = next.color;
+        }
+        ctx.globalAlpha = Math.min(1, p.alpha * (hover ? 1.15 : 1));
+        ctx.fillStyle = p.color;
+        ctx.fillRect((p.x + 0.5) | 0, (p.y + 0.5) | 0, p.size, p.size);
+      }
+      ctx.globalAlpha = 1;
+      raf = requestAnimationFrame(tick);
+    }
+
+    bar.addEventListener("pointerenter", () => { hover = true; });
+    bar.addEventListener("pointerleave", () => { hover = false; });
+    window.addEventListener("resize", resize);
+    document.addEventListener("visibilitychange", () => {
+      cancelAnimationFrame(raf);
+      if (!document.hidden) raf = requestAnimationFrame(tick);
+    });
+    resize();
+    raf = requestAnimationFrame(tick);
+  }
 })();
 </script>
 </body>

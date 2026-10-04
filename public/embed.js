@@ -4,7 +4,7 @@
  * Usage:
  *   <script
  *     src="https://reader-leaderboard-iota.vercel.app/embed.js"
- *     data-params="title=The%20organisations%20<em>reading%20Juice%20News</em>&eyebrow=Reader%20Leaderboard"
+ *     data-params="title=The%20organizations%20<em>reading%20Juice%20News</em>&eyebrow=Reader%20Leaderboard"
  *     data-fallback-height="1600"
  *   ></script>
  */

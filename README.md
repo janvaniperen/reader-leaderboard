@@ -177,7 +177,7 @@ The same deploy can serve multiple branded versions by reading URL params. This 
 | `initial`     | `20`                          | Rows shown before "Show more"                      |
 | `max`         | `100`                         | Hard cap on rows ever displayed                    |
 | `eyebrow`     | `Reader Leaderboard`          | Tiny pill above the title                          |
-| `title`       | `The organisations <em>reading along</em>` | Big headline (HTML allowed in `<em>`) |
+| `title`       | `The organizations <em>reading along</em>` | Big headline (HTML allowed in `<em>`) |
 | `subtitle`    | _default copy_                | Subtitle under the title                           |
 | `c_accent`    | `#ff7a1a`                     | Accent color (any `c_*` param maps to a CSS var)   |
 | `c_bg`        | `#fffdf6`                     | Background color                                   |
