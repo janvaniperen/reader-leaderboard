@@ -229,6 +229,8 @@
     .reveal { animation: none; opacity: 1; transform: none; }
     .row::before { transition: none; }
   }
+  html.refer-hosted .refer-bar { display: none !important; }
+  html.refer-hosted body { padding-bottom: 0 !important; }
 
   /* ───── Leaderboard ───── */
   .board {
@@ -997,6 +999,10 @@
     window.addEventListener("load", burstEmbedHeightUpdates);
     window.addEventListener("message", (e) => {
       if (e.data?.type === "reader-leaderboard:request-height") burstEmbedHeightUpdates();
+      if (e.data?.type === "reader-leaderboard:refer-host") {
+        document.documentElement.classList.add("refer-hosted");
+        notifyEmbedHeight();
+      }
     });
   }
 
@@ -1121,6 +1127,7 @@
     }
 
     function tick() {
+      if (document.documentElement.classList.contains("refer-hosted")) return;
       const boost = hover ? 2.6 : 1;
       ctx.clearRect(0, 0, width, height);
       for (const p of particles) {
