@@ -244,7 +244,7 @@
   .row-line,
   .skeleton .row {
     display: grid;
-    grid-template-columns: 52px minmax(0, 1fr) 72px 72px;
+    grid-template-columns: 52px minmax(0, 1fr) 5rem 5rem;
     column-gap: 8px;
   }
   .board-head {
@@ -263,16 +263,16 @@
     background: none;
     border: 0;
     border-bottom: 2px solid transparent;
-    padding: 0 0 3px;
+    padding: 0 2px 3px;
     font: inherit;
     font-size: inherit;
     font-weight: inherit;
     letter-spacing: inherit;
     text-transform: inherit;
     color: inherit;
-    text-align: right;
+    text-align: center;
     cursor: pointer;
-    justify-self: end;
+    justify-self: center;
   }
   .col-sort[aria-pressed="true"] {
     color: var(--accent-dark);
@@ -345,7 +345,7 @@
   .col-impact { color: var(--accent-dark); }
   @media (max-width: 520px) {
     .board-head, .row-line, .skeleton .row {
-      grid-template-columns: 40px minmax(0, 1fr) 52px 52px;
+      grid-template-columns: 40px minmax(0, 1fr) 4.5rem 4.5rem;
     }
     .board-head, .row-line {
       padding-left: 12px;
@@ -437,8 +437,10 @@
     font-weight: 600;
     font-size: 20px;
     color: var(--ink);
-    text-align: right;
+    text-align: center;
+    justify-self: center;
   }
+  .col-count.metric-impact { grid-column: 4; }
   .col-count-label {
     display: block;
     font-family: 'Inter', sans-serif;
@@ -756,7 +758,9 @@
       rankCell = `<div class="col-rank">${rank}</div>`;
     }
     const selected = company.company === boardState.selected;
-    const impactClass = company.impact > company.count ? " col-impact" : "";
+    const showImpact = boardState.sort === "impact";
+    const metric = showImpact ? company.impact : company.count;
+    const metricClass = showImpact && company.impact > company.count ? " col-impact metric-impact" : showImpact ? " metric-impact" : "";
     const fold = selected ? foldHTML(company) : "";
     return `
       <div class="row${selected ? " selected" : ""}" role="button" tabindex="0"
@@ -772,8 +776,7 @@
               ${companyMetaHTML(company)}
             </div>
           </div>
-          <div class="col-count">${company.count}</div>
-          <div class="col-count${impactClass}">${company.impact}</div>
+          <div class="col-count${metricClass}">${metric}</div>
         </div>
         ${fold}
       </div>`;
